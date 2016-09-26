@@ -1,5 +1,7 @@
 precision highp float;
 
+//Based on shader toy: https://www.shadertoy.com/view/XsfSDs by jcant0n
+
 uniform vec2 iResolution;
 uniform sampler2D uSampler;
 uniform vec2 iMouse;
