@@ -337,13 +337,13 @@ Object.defineProperties(OutlineFilter.prototype, {
  * @example
  *  someSprite.shader = new OutlineFilter(renderer.width, renderer.height, 9, 0xFF0000);
  */
-function RadialblurFilter(iResolution, iMouse) {
+function RadialblurFilter() {
     PIXI.Filter.call(this,
         // vertex shader
         // vertex shader
         "#define GLSLIFY 1\nattribute vec2 aVertexPosition;\nattribute vec2 aTextureCoord;\n\nuniform mat3 projectionMatrix;\nuniform mat3 filterMatrix;\n\nvarying vec2 vTextureCoord;\nvarying vec2 vFilterCoord;\n\nvoid main(void)\n{\n   gl_Position = vec4((projectionMatrix * vec3(aVertexPosition, 1.0)).xy, 0.0, 1.0);\n   vFilterCoord = ( filterMatrix * vec3( aTextureCoord, 1.0)  ).xy;\n   vTextureCoord = aTextureCoord;\n}\n",
         // fragment shader
-        "precision highp float;\n#define GLSLIFY 1\n\nuniform vec2 iResolution;\nuniform sampler2D uSampler;\nuniform vec2 iMouse;\n\nconst int nsamples = 30;\n\nvoid main(void)\n{\n        vec2 center = iMouse.xy / iResolution.xy;\n    \tfloat blurStart = 1.0;\n        float blurWidth = 0.04;\n\n    \tvec2 uv = vTextureCoord.xy;\n\n        uv -= center;\n        float precompute = blurWidth * (1.0 / float(nsamples - 1));\n\n        vec4 color = vec4(0.0);\n        for(int i = 0; i < nsamples; i++)\n        {\n            float scale = blurStart + (float(i)* precompute);\n            color += texture2D(uSampler, uv * scale + center);\n        }\n\n        color /= float(nsamples);\n        gl_FragColor = color;\n}\n",
+        "precision highp float;\n#define GLSLIFY 1\n\n//Based on shader toy: https://www.shadertoy.com/view/XsfSDs by jcant0n\n\nuniform vec2 iResolution;\nuniform sampler2D uSampler;\nuniform vec2 iMouse;\nvarying vec2 vTextureCoord;\n\nconst int nsamples = 50;\n\nvoid main(void)\n{\n        vec2 center = iMouse.xy / iResolution.xy;\n    \tfloat blurStart = 1.0;\n        float blurWidth = 0.03;\n\n    \tvec2 uv = vTextureCoord.xy;\n\n        uv -= center;\n        float precompute = blurWidth * (1.0 / float(nsamples - 1));\n\n        vec4 color = vec4(0.0);\n        for(int i = 0; i < nsamples; i++)\n        {\n            float scale = blurStart + (float(i)* precompute);\n            color += texture2D(uSampler, uv * scale + center);\n        }\n\n        color /= float(nsamples);\n        gl_FragColor = color;\n}\n",
         {
             iResolution: { type: 'v2', value: { x: 1920, y: 1080 } },
             iMouse: { type: 'v2', value: { x: 10, y: 10.8 } },
@@ -354,7 +354,7 @@ function RadialblurFilter(iResolution, iMouse) {
         }
     );
 
-    this.iResolution = [1920, 1080];
+    this.iResolution = [1000, 556];
     this.iMouse = [10, 10];
 };
 
