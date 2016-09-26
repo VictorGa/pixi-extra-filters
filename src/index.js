@@ -4,7 +4,8 @@ module.exports = {
     BulgePinchFilter: require('./filters/bulgepinch/BulgePinchFilter'),
     ColorReplaceFilter: require('./filters/colorreplace/ColorReplaceFilter'),
     SimpleLightmapFilter:
-        require('./filters/simplelightmap/SimpleLightmapFilter')
+        require('./filters/simplelightmap/SimpleLightmapFilter'),
+    RadialBlur: require('./filters/radialblur/RadialblurFilter')
 };
 
 for (var filter in module.exports) {

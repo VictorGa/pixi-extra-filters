@@ -22,7 +22,7 @@ function BulgePinchFilter() {
     PIXI.Filter.call(this,
         // vertex shader
        // vertex shader
-        "#define GLSLIFY 1\nattribute vec2 aVertexPosition;\n\nattribute vec2 aTextureCoord;\n\nuniform mat3 projectionMatrix;\n\nvarying vec2 vTextureCoord;\n\nvoid main(void){\n\n    gl_Position = vec4((projectionMatrix * vec3(aVertexPosition, 1.0)).xy, 0.0, 1.0);\n\n    vTextureCoord = aTextureCoord;\n\n}\n\n",
+        "#define GLSLIFY 1\nattribute vec2 aVertexPosition;\nattribute vec2 aTextureCoord;\n\nuniform mat3 projectionMatrix;\nvarying vec2 vTextureCoord;\n\nvoid main(void){\n    gl_Position = vec4((projectionMatrix * vec3(aVertexPosition, 1.0)).xy, 0.0, 1.0);\n    vTextureCoord = aTextureCoord;\n}\n",
             // fragment shader
         "#define GLSLIFY 1\nuniform float radius;\nuniform float strength;\nuniform vec2 center;\nuniform sampler2D uSampler;\nuniform vec4 dimensions;\nvarying vec2 vTextureCoord;\nvoid main()\n{\n    vec2 coord = vTextureCoord * dimensions.xy;\n    coord -= center;\n    float distance = length(coord);\n    if (distance < radius) {\n        float percent = distance / radius;\n        if (strength > 0.0) {\n            coord *= mix(1.0, smoothstep(0.0, radius /     distance, percent), strength * 0.75);\n        } else {\n            coord *= mix(1.0, pow(percent, 1.0 + strength * 0.75) * radius / distance, 1.0 - percent);\n        }\n    }\n    coord += center;\n    gl_FragColor = texture2D(uSampler, coord / dimensions.xy);\n    vec2 clampedCoord = clamp(coord, vec2(0.0), dimensions.xy);\n    if (coord != clampedCoord) {\n    gl_FragColor.a *= max(0.0, 1.0 - length(coord - clampedCoord));\n    }\n}\n"
     );
@@ -114,7 +114,7 @@ function ColorReplaceFilter(originalColor, newColor, epsilon) {
     PIXI.Filter.call(this,
         // vertex shader
         // vertex shader
-        "#define GLSLIFY 1\nattribute vec2 aVertexPosition;\n\nattribute vec2 aTextureCoord;\n\nuniform mat3 projectionMatrix;\n\nvarying vec2 vTextureCoord;\n\nvoid main(void){\n\n    gl_Position = vec4((projectionMatrix * vec3(aVertexPosition, 1.0)).xy, 0.0, 1.0);\n\n    vTextureCoord = aTextureCoord;\n\n}\n\n",
+        "#define GLSLIFY 1\nattribute vec2 aVertexPosition;\nattribute vec2 aTextureCoord;\n\nuniform mat3 projectionMatrix;\nvarying vec2 vTextureCoord;\n\nvoid main(void){\n    gl_Position = vec4((projectionMatrix * vec3(aVertexPosition, 1.0)).xy, 0.0, 1.0);\n    vTextureCoord = aTextureCoord;\n}\n",
         // fragment shader
         "#define GLSLIFY 1\nvarying vec2 vTextureCoord;\nuniform sampler2D texture;\nuniform vec3 originalColor;\nuniform vec3 newColor;\nuniform float epsilon;\nvoid main(void) {\n    vec4 currentColor = texture2D(texture, vTextureCoord);\n    vec3 colorDiff = originalColor - (currentColor.rgb / max(currentColor.a, 0.0000000001));\n    float colorDistance = length(colorDiff);\n    float doReplace = step(colorDistance, epsilon);\n    gl_FragColor = vec4(mix(currentColor.rgb, (newColor + colorDiff) * currentColor.a, doReplace), currentColor.a);\n}\n"
     );
@@ -153,6 +153,8 @@ Object.defineProperty(ColorReplaceFilter.prototype, 'epsilon', {
 });
 
 },{}],3:[function(require,module,exports){
+
+
 /**
  * GlowFilter, originally by mishaa
  * http://www.html5gamedevs.com/topic/12756-glow-filter/?hl=mishaa#entry73578
@@ -175,9 +177,9 @@ function GlowFilter(viewWidth, viewHeight, distance, outerStrength, innerStrengt
     PIXI.Filter.call(this,
         // vertex shader
         // vertex shader
-        glslify('./glow.vert'),
+        "#define GLSLIFY 1\nattribute vec2 aVertexPosition;\nattribute vec2 aTextureCoord;\n\nuniform mat3 projectionMatrix;\nvarying vec2 vTextureCoord;\n\nvoid main(void){\n    gl_Position = vec4((projectionMatrix * vec3(aVertexPosition, 1.0)).xy, 0.0, 1.0);\n    vTextureCoord = aTextureCoord;\n}\n",
         // fragment shader
-        glslify('./glow.frag')
+        "#define GLSLIFY 1\nvarying vec2 vTextureCoord;\nvarying vec4 vColor;\n\nuniform sampler2D uSampler;\n\nuniform float distance;\nuniform float outerStrength;\nuniform float innerStrength;\nuniform vec4 glowColor;\nuniform float pixelWidth;\nuniform float pixelHeight;\nvec2 px = vec2(pixelWidth, pixelHeight);\n\nvoid main(void) {\n    const float PI = 3.14159265358979323846264;\n    vec4 ownColor = texture2D(uSampler, vTextureCoord);\n    vec4 curColor;\n    float totalAlpha = 0.0;\n    float maxTotalAlpha = 0.0;\n    float cosAngle;\n    float sinAngle;\n    for (float angle = 0.0; angle <= PI * 2.0; angle += ' + (1 / quality / distance).toFixed(7) + ') {\n       cosAngle = cos(angle);\n       sinAngle = sin(angle);\n       for (float curDistance = 1.0; curDistance <= ' + distance.toFixed(7) + '; curDistance++) {\n           curColor = texture2D(uSampler, vec2(vTextureCoord.x + cosAngle * curDistance * px.x, vTextureCoord.y + sinAngle * curDistance * px.y));\n           totalAlpha += (distance - curDistance) * curColor.a;\n           maxTotalAlpha += (distance - curDistance);\n       }\n    }\n    maxTotalAlpha = max(maxTotalAlpha, 0.0001);\n\n    ownColor.a = max(ownColor.a, 0.0001);\n    ownColor.rgb = ownColor.rgb / ownColor.a;\n    float outerGlowAlpha = (totalAlpha / maxTotalAlpha)  * outerStrength * (1. - ownColor.a);\n    float innerGlowAlpha = ((maxTotalAlpha - totalAlpha) / maxTotalAlpha) * innerStrength * ownColor.a;\n    float resultAlpha = (ownColor.a + outerGlowAlpha);\n    gl_FragColor = vec4(mix(mix(ownColor.rgb, glowColor.rgb, innerGlowAlpha / ownColor.a), glowColor.rgb, outerGlowAlpha / resultAlpha) * resultAlpha, resultAlpha);\n}\n"
     );
 
     this.uniforms.distance = distance;
@@ -319,6 +321,70 @@ Object.defineProperties(OutlineFilter.prototype, {
 });
 
 },{}],5:[function(require,module,exports){
+
+
+/**
+ * OutlineFilter, originally by mishaa
+ * http://www.html5gamedevs.com/topic/10640-outline-a-sprite-change-certain-colors/?p=69966
+ * http://codepen.io/mishaa/pen/emGNRB
+ *
+ * @class
+ * @param viewWidth {number} The width of the view to draw to, usually renderer.width.
+ * @param viewHeight {number} The height of the view to draw to, usually renderer.height.
+ * @param thickness {number} The tickness of the outline.
+ * @param color {number} The color of the glow.
+ *
+ * @example
+ *  someSprite.shader = new OutlineFilter(renderer.width, renderer.height, 9, 0xFF0000);
+ */
+function RadialblurFilter(iResolution, iMouse) {
+    PIXI.Filter.call(this,
+        // vertex shader
+        // vertex shader
+        "#define GLSLIFY 1\nattribute vec2 aVertexPosition;\nattribute vec2 aTextureCoord;\n\nuniform mat3 projectionMatrix;\nuniform mat3 filterMatrix;\n\nvarying vec2 vTextureCoord;\nvarying vec2 vFilterCoord;\n\nvoid main(void)\n{\n   gl_Position = vec4((projectionMatrix * vec3(aVertexPosition, 1.0)).xy, 0.0, 1.0);\n   vFilterCoord = ( filterMatrix * vec3( aTextureCoord, 1.0)  ).xy;\n   vTextureCoord = aTextureCoord;\n}\n",
+        // fragment shader
+        "precision highp float;\n#define GLSLIFY 1\n\nuniform vec2 iResolution;\nuniform sampler2D uSampler;\nuniform vec2 iMouse;\n\nconst int nsamples = 30;\n\nvoid main(void)\n{\n        vec2 center = iMouse.xy / iResolution.xy;\n    \tfloat blurStart = 1.0;\n        float blurWidth = 0.04;\n\n    \tvec2 uv = vTextureCoord.xy;\n\n        uv -= center;\n        float precompute = blurWidth * (1.0 / float(nsamples - 1));\n\n        vec4 color = vec4(0.0);\n        for(int i = 0; i < nsamples; i++)\n        {\n            float scale = blurStart + (float(i)* precompute);\n            color += texture2D(uSampler, uv * scale + center);\n        }\n\n        color /= float(nsamples);\n        gl_FragColor = color;\n}\n",
+        {
+            iResolution: { type: 'v2', value: { x: 1920, y: 1080 } },
+            iMouse: { type: 'v2', value: { x: 10, y: 10.8 } },
+            dimensions: {
+                type: '4fv',
+                value: new Float32Array([0, 0, 0, 0])
+            }
+        }
+    );
+
+    this.iResolution = [1920, 1080];
+    this.iMouse = [10, 10];
+};
+
+RadialblurFilter.prototype = Object.create(PIXI.Filter.prototype);
+RadialblurFilter.prototype.constructor = RadialblurFilter;
+module.exports = RadialblurFilter;
+
+Object.defineProperties(RadialblurFilter.prototype, {
+    iMouse: {
+        get: function () {
+            return this.uniforms.iMouse;
+        },
+        set: function (value) {
+            this.uniforms.iMouse = value;
+        }
+    },
+
+    iResolution: {
+        get: function () {
+            return this.uniforms.iResolution;
+        },
+        set: function(value) {
+            this.uniforms.iResolution = value;
+        }
+    }
+});
+
+},{}],6:[function(require,module,exports){
+
+
 /**
 * SimpleLightmap, originally by Oza94
 * http://www.html5gamedevs.com/topic/20027-pixijs-simple-lightmapping/
@@ -342,9 +408,9 @@ function SimpleLightmapFilter(lightmapTexture, ambientColor, resolution) {
     PIXI.Filter.call(this,
         // vertex shader
         // vertex shader
-        glslify('./simpleLightmap.vert'),
+        "precision mediump float;\n#define GLSLIFY 1\n\nvarying vec2 vTextureCoord;\nuniform sampler2D uSampler;\n\nuniform float thickness;\nuniform vec4 outlineColor;\nuniform float pixelWidth;\nuniform float pixelHeight;\nvec2 px = vec2(pixelWidth, pixelHeight);\n\nvoid main(void) {\n    const float PI = 3.14159265358979323846264;\n    vec4 ownColor = texture2D(uSampler, vTextureCoord);\n    vec4 curColor;\n    float maxAlpha = 0.;\n    for (float angle = 0.; angle < PI * 2.; angle +=  + (1 / thickness).toFixed(7) + ) {\n        curColor = texture2D(uSampler, vec2(vTextureCoord.x + thickness * px.x * cos(angle), vTextureCoord.y + thickness * px.y * sin(angle)));\n        maxAlpha = max(maxAlpha, curColor.a);\n    }\n    float resultAlpha = max(maxAlpha, ownColor.a);\n    gl_FragColor = vec4((ownColor.rgb + outlineColor.rgb * (1. - ownColor.a)) * resultAlpha, resultAlpha);\n}\n",
         // fragment shader
-        glslify('./simpleLightmap.frag')
+        "#define GLSLIFY 1\nvarying vec4 vColor;\nvarying vec2 vTextureCoord;\nuniform sampler2D u_texture; //diffuse map\nuniform sampler2D u_lightmap;   //light map\nuniform vec2 resolution; //resolution of screen\nuniform vec4 ambientColor; //ambient RGB, alpha channel is intensity\nvoid main() {\n    vec4 diffuseColor = texture2D(u_texture, vTextureCoord);\n    vec2 lighCoord = (gl_FragCoord.xy / resolution.xy);\n    vec4 light = texture2D(u_lightmap, vTextureCoord);\n    vec3 ambient = ambientColor.rgb * ambientColor.a;\n    vec3 intensity = ambient + light.rgb;\n    vec3 finalColor = diffuseColor.rgb * intensity;\n    gl_FragColor = vColor * vec4(finalColor, diffuseColor.a);\n}\n"
     );
     this.uniforms.u_lightmap = lightmapTexture;
     this.uniforms.resolution = new Float32Array(resolution || [1.0, 1.0]);
@@ -383,21 +449,22 @@ Object.defineProperties(SimpleLightmapFilter.prototype, {
 
 module.exports = SimpleLightmapFilter;
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 module.exports = {
     GlowFilter: require('./filters/glow/GlowFilter'),
     OutlineFilter: require('./filters/outline/OutlineFilter'),
     BulgePinchFilter: require('./filters/bulgepinch/BulgePinchFilter'),
     ColorReplaceFilter: require('./filters/colorreplace/ColorReplaceFilter'),
     SimpleLightmapFilter:
-        require('./filters/simplelightmap/SimpleLightmapFilter')
+        require('./filters/simplelightmap/SimpleLightmapFilter'),
+    RadialBlur: require('./filters/radialblur/RadialblurFilter')
 };
 
 for (var filter in module.exports) {
     PIXI.filters[filter] = module.exports[filter];
 }
 
-},{"./filters/bulgepinch/BulgePinchFilter":1,"./filters/colorreplace/ColorReplaceFilter":2,"./filters/glow/GlowFilter":3,"./filters/outline/OutlineFilter":4,"./filters/simplelightmap/SimpleLightmapFilter":5}]},{},[6])
+},{"./filters/bulgepinch/BulgePinchFilter":1,"./filters/colorreplace/ColorReplaceFilter":2,"./filters/glow/GlowFilter":3,"./filters/outline/OutlineFilter":4,"./filters/radialblur/RadialblurFilter":5,"./filters/simplelightmap/SimpleLightmapFilter":6}]},{},[7])
 
 
 //# sourceMappingURL=pixi-extra-filters.js.map
