@@ -14,7 +14,7 @@ var glslify  = require('glslify');
  * @example
  *  someSprite.shader = new OutlineFilter(renderer.width, renderer.height, 9, 0xFF0000);
  */
-function RadialblurFilter(iResolution, iMouse) {
+function RadialblurFilter() {
     PIXI.Filter.call(this,
         // vertex shader
         // vertex shader
@@ -31,7 +31,7 @@ function RadialblurFilter(iResolution, iMouse) {
         }
     );
 
-    this.iResolution = [1920, 1080];
+    this.iResolution = [1000, 556];
     this.iMouse = [10, 10];
 };
 
