@@ -5,7 +5,8 @@ module.exports = {
     ColorReplaceFilter: require('./filters/colorreplace/ColorReplaceFilter'),
     SimpleLightmapFilter:
         require('./filters/simplelightmap/SimpleLightmapFilter'),
-    RadialBlur: require('./filters/radialblur/RadialblurFilter')
+    RadialBlur: require('./filters/radialblur/RadialblurFilter'),
+    RadialBlurMask: require('./filters/radialblurmask/RadialblurMaskFilter')
 };
 
 for (var filter in module.exports) {

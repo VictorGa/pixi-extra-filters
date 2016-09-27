@@ -343,7 +343,7 @@ function RadialblurFilter(iResolution, iMouse) {
         // vertex shader
         "#define GLSLIFY 1\nattribute vec2 aVertexPosition;\nattribute vec2 aTextureCoord;\n\nuniform mat3 projectionMatrix;\nuniform mat3 filterMatrix;\n\nvarying vec2 vTextureCoord;\nvarying vec2 vFilterCoord;\n\nvoid main(void)\n{\n   gl_Position = vec4((projectionMatrix * vec3(aVertexPosition, 1.0)).xy, 0.0, 1.0);\n   vFilterCoord = ( filterMatrix * vec3( aTextureCoord, 1.0)  ).xy;\n   vTextureCoord = aTextureCoord;\n}\n",
         // fragment shader
-        "precision highp float;\n#define GLSLIFY 1\n\nuniform vec2 iResolution;\nuniform sampler2D uSampler;\nuniform vec2 iMouse;\n\nconst int nsamples = 30;\n\nvoid main(void)\n{\n        vec2 center = iMouse.xy / iResolution.xy;\n    \tfloat blurStart = 1.0;\n        float blurWidth = 0.04;\n\n    \tvec2 uv = vTextureCoord.xy;\n\n        uv -= center;\n        float precompute = blurWidth * (1.0 / float(nsamples - 1));\n\n        vec4 color = vec4(0.0);\n        for(int i = 0; i < nsamples; i++)\n        {\n            float scale = blurStart + (float(i)* precompute);\n            color += texture2D(uSampler, uv * scale + center);\n        }\n\n        color /= float(nsamples);\n        gl_FragColor = color;\n}\n",
+        "precision highp float;\n#define GLSLIFY 1\n\n//Based on shader toy: https://www.shadertoy.com/view/XsfSDs by jcant0n\n\nuniform vec2 iResolution;\nuniform sampler2D uSampler;\nuniform vec2 iMouse;\nvarying vec2 vTextureCoord;\n\nconst int nsamples = 30;\n\nvoid main(void)\n{\n    vec2 center = iMouse.xy / iResolution.xy;\n\n    \tfloat blurStart = 1.0;\n        float blurWidth = 0.04;\n\n    \tvec2 uv = vTextureCoord.xy;\n\n        uv -= center;\n        float precompute = blurWidth * (1.0 / float(nsamples - 1));\n\n        vec4 color = vec4(0.0);\n        for(int i = 0; i < nsamples; i++)\n        {\n            float scale = blurStart + (float(i)* precompute);\n            color += texture2D(uSampler, uv * scale + center);\n        }\n\n        color /= float(nsamples);\n        gl_FragColor = color;\n}\n",
         {
             iResolution: { type: 'v2', value: { x: 1920, y: 1080 } },
             iMouse: { type: 'v2', value: { x: 10, y: 10.8 } },
@@ -383,6 +383,68 @@ Object.defineProperties(RadialblurFilter.prototype, {
 });
 
 },{}],6:[function(require,module,exports){
+
+
+/**
+ * OutlineFilter, originally by mishaa
+ * http://www.html5gamedevs.com/topic/10640-outline-a-sprite-change-certain-colors/?p=69966
+ * http://codepen.io/mishaa/pen/emGNRB
+ *
+ * @class
+ * @param viewWidth {number} The width of the view to draw to, usually renderer.width.
+ * @param viewHeight {number} The height of the view to draw to, usually renderer.height.
+ * @param thickness {number} The tickness of the outline.
+ * @param color {number} The color of the glow.
+ *
+ * @example
+ *  someSprite.shader = new OutlineFilter(renderer.width, renderer.height, 9, 0xFF0000);
+ */
+function RadialblurMaskFilter(iResolution, iMouse) {
+    PIXI.Filter.call(this,
+        // vertex shader
+        // vertex shader
+        "#define GLSLIFY 1\nattribute vec2 aVertexPosition;\nattribute vec2 aTextureCoord;\n\nuniform mat3 projectionMatrix;\nuniform mat3 filterMatrix;\n\nvarying vec2 vTextureCoord;\nvarying vec2 vFilterCoord;\n\nvoid main(void)\n{\n   gl_Position = vec4((projectionMatrix * vec3(aVertexPosition, 1.0)).xy, 0.0, 1.0);\n   vFilterCoord = ( filterMatrix * vec3( aTextureCoord, 1.0)  ).xy;\n   vTextureCoord = aTextureCoord;\n}\n",
+        // fragment shader
+        "precision highp float;\n#define GLSLIFY 1\n\n//Based on shader toy: https://www.shadertoy.com/view/XsfSDs by jcant0n\n\nuniform vec2 iResolution;\nuniform sampler2D uSampler;\nuniform vec2 iMouse;\n\nconst int nsamples = 30;\n\nvarying vec2 vTextureCoord;\n\nvoid main(void)\n{\n    vec2 center = iMouse.xy / iResolution.xy;\n    vec2 uv = vTextureCoord.xy;\n//    vec2 center = iMouse - (uv / iResolution);\n    vec4 color = vec4(0.0);\n\n    if(distance(uv, center) < 0.1)\n        {\n\t        gl_FragColor = texture2D(uSampler, vec2(0.0));\n\t        discard;\n        }\n    else\n        {\n         float blurStart = 1.0;\n         float blurWidth = 0.02;\n         float precompute = blurWidth * (1.0 / float(nsamples - 1));\n\n         uv -= center;\n         for(int i = 0; i < nsamples; i++)\n         {\n               float scale = blurStart + (float(i)* precompute);\n               color += texture2D(uSampler, uv * scale + center);\n         }\n         color /= float(nsamples);\n         gl_FragColor = color;\n     }\n}\n",
+        {
+            iResolution: { type: 'v2', value: { x: 1920, y: 1080 } },
+            iMouse: { type: 'v2', value: { x: 10, y: 10.8 } },
+            dimensions: {
+                type: '4fv',
+                value: new Float32Array([0, 0, 0, 0])
+            }
+        }
+    );
+
+    this.iResolution = [1920, 1080];
+    this.iMouse = [10, 10];
+};
+
+RadialblurMaskFilter.prototype = Object.create(PIXI.Filter.prototype);
+RadialblurMaskFilter.prototype.constructor = RadialblurMaskFilter;
+module.exports = RadialblurMaskFilter;
+
+Object.defineProperties(RadialblurMaskFilter.prototype, {
+    iMouse: {
+        get: function () {
+            return this.uniforms.iMouse;
+        },
+        set: function (value) {
+            this.uniforms.iMouse = value;
+        }
+    },
+
+    iResolution: {
+        get: function () {
+            return this.uniforms.iResolution;
+        },
+        set: function(value) {
+            this.uniforms.iResolution = value;
+        }
+    }
+});
+
+},{}],7:[function(require,module,exports){
 
 
 /**
@@ -449,7 +511,7 @@ Object.defineProperties(SimpleLightmapFilter.prototype, {
 
 module.exports = SimpleLightmapFilter;
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 module.exports = {
     GlowFilter: require('./filters/glow/GlowFilter'),
     OutlineFilter: require('./filters/outline/OutlineFilter'),
@@ -457,14 +519,15 @@ module.exports = {
     ColorReplaceFilter: require('./filters/colorreplace/ColorReplaceFilter'),
     SimpleLightmapFilter:
         require('./filters/simplelightmap/SimpleLightmapFilter'),
-    RadialBlur: require('./filters/radialblur/RadialblurFilter')
+    RadialBlur: require('./filters/radialblur/RadialblurFilter'),
+    RadialBlurMask: require('./filters/radialblurmask/RadialblurMaskFilter')
 };
 
 for (var filter in module.exports) {
     PIXI.filters[filter] = module.exports[filter];
 }
 
-},{"./filters/bulgepinch/BulgePinchFilter":1,"./filters/colorreplace/ColorReplaceFilter":2,"./filters/glow/GlowFilter":3,"./filters/outline/OutlineFilter":4,"./filters/radialblur/RadialblurFilter":5,"./filters/simplelightmap/SimpleLightmapFilter":6}]},{},[7])
+},{"./filters/bulgepinch/BulgePinchFilter":1,"./filters/colorreplace/ColorReplaceFilter":2,"./filters/glow/GlowFilter":3,"./filters/outline/OutlineFilter":4,"./filters/radialblur/RadialblurFilter":5,"./filters/radialblurmask/RadialblurMaskFilter":6,"./filters/simplelightmap/SimpleLightmapFilter":7}]},{},[8])
 
 
 //# sourceMappingURL=pixi-extra-filters.js.map

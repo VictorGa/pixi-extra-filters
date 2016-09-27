@@ -5,12 +5,14 @@ precision highp float;
 uniform vec2 iResolution;
 uniform sampler2D uSampler;
 uniform vec2 iMouse;
+varying vec2 vTextureCoord;
 
 const int nsamples = 30;
 
 void main(void)
 {
-        vec2 center = iMouse.xy / iResolution.xy;
+    vec2 center = iMouse.xy / iResolution.xy;
+
     	float blurStart = 1.0;
         float blurWidth = 0.04;
 
