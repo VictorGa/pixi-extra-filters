@@ -24,15 +24,16 @@ function RadialblurFilter() {
         {
             iResolution: { type: 'v2', value: { x: 1920, y: 1080 } },
             iMouse: { type: 'v2', value: { x: 10, y: 10.8 } },
-            dimensions: {
-                type: '4fv',
-                value: new Float32Array([0, 0, 0, 0])
+            blur: {
+                type: 'f',
+                value: 0.01
             }
         }
     );
 
     this.iResolution = [1000, 556];
     this.iMouse = [10, 10];
+    this.blur = 0.01;
 };
 
 RadialblurFilter.prototype = Object.create(PIXI.Filter.prototype);
@@ -55,6 +56,15 @@ Object.defineProperties(RadialblurFilter.prototype, {
         },
         set: function(value) {
             this.uniforms.iResolution = value;
+        }
+    },
+
+    blur: {
+        get: function () {
+            return this.uniforms.blur;
+        },
+        set: function(value) {
+            this.uniforms.blur = value;
         }
     }
 });

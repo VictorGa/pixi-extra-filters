@@ -5,6 +5,7 @@ precision highp float;
 uniform vec2 iResolution;
 uniform sampler2D uSampler;
 uniform vec2 iMouse;
+uniform float blur;
 varying vec2 vTextureCoord;
 
 const int nsamples = 50;
@@ -14,12 +15,12 @@ void main(void)
     vec2 center = iMouse.xy / iResolution.xy;
 
     	float blurStart = 1.0;
-        float blurWidth = 0.03;
+        //float blurWidth = 0.1;
 
     	vec2 uv = vTextureCoord.xy;
 
         uv -= center;
-        float precompute = blurWidth * (1.0 / float(nsamples - 1));
+        float precompute = blur * (1.0 / float(nsamples - 1));
 
         vec4 color = vec4(0.0);
         for(int i = 0; i < nsamples; i++)

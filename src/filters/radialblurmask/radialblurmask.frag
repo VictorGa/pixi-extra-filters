@@ -5,6 +5,7 @@ precision highp float;
 uniform vec2 iResolution;
 uniform sampler2D uSampler;
 uniform vec2 iMouse;
+uniform float blur;
 
 const int nsamples = 30;
 
@@ -17,16 +18,15 @@ void main(void)
 //    vec2 center = iMouse - (uv / iResolution);
     vec4 color = vec4(0.0);
 
-    if(distance(uv, center) < 0.1)
+    if(distance(uv, center) < 0.2)
         {
-	        gl_FragColor = texture2D(uSampler, vec2(0.0));
-	        discard;
+	        gl_FragColor = texture2D(uSampler, uv);
         }
     else
         {
          float blurStart = 1.0;
          float blurWidth = 0.02;
-         float precompute = blurWidth * (1.0 / float(nsamples - 1));
+         float precompute = blur * (1.0 / float(nsamples - 1));
 
          uv -= center;
          for(int i = 0; i < nsamples; i++)
