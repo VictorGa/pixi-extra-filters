@@ -268,6 +268,78 @@ Object.defineProperties(GlowFilter.prototype, {
  * @example
  *  someSprite.shader = new OutlineFilter(renderer.width, renderer.height, 9, 0xFF0000);
  */
+function HashedblurFilter(iResolution, iMouse) {
+    PIXI.Filter.call(this,
+        // vertex shader
+        // vertex shader
+        "#define GLSLIFY 1\nattribute vec2 aVertexPosition;\nattribute vec2 aTextureCoord;\n\nuniform mat3 projectionMatrix;\nuniform mat3 filterMatrix;\n\nvarying vec2 vTextureCoord;\nvarying vec2 vFilterCoord;\n\nvoid main(void)\n{\n   gl_Position = vec4((projectionMatrix * vec3(aVertexPosition, 1.0)).xy, 0.0, 1.0);\n   vFilterCoord = ( filterMatrix * vec3( aTextureCoord, 1.0)  ).xy;\n   vTextureCoord = aTextureCoord;\n}\n",
+        // fragment shader
+        "precision highp float;\n#define GLSLIFY 1\n\n//Based on shader toy: https://www.shadertoy.com/view/XsfSDs by jcant0n\n\nuniform vec2 iResolution;\nuniform sampler2D uSampler;\nuniform vec2 iMouse;\nuniform float blur;\n\nconst int nsamples = 30;\n\nvarying vec2 vTextureCoord;\n// Hashed blur\n// David Hoskins.\n// License Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License.\n\n// Can go down to 10 or so, and still be usable, probably...\n#define ITERATIONS 30\n\n// Set this to 0.0 to stop the pixel movement.\n#define TIME iGlobalTime\n\n#define TAU  6.28318530718\n\n//-------------------------------------------------------------------------------------------\n// Use last part of hash function to generate new random radius and angle...\nvec2 Sample(inout vec2 r)\n{\n    r = fract(r * vec2(33.3983, 43.4427));\n    return r-.5;\n    //return sqrt(r.x+.001) * vec2(sin(r.y * TAU), cos(r.y * TAU))*.5; // <<=== circular sampling.\n}\n\n//-------------------------------------------------------------------------------------------\n#define HASHSCALE 443.8975\nvec2 Hash22(vec2 p)\n{\n\tvec3 p3 = fract(vec3(p.xyx) * HASHSCALE);\n    p3 += dot(p3, p3.yzx+19.19);\n    return fract(vec2((p3.x + p3.y)*p3.z, (p3.x+p3.z)*p3.y));\n}\n\n//-------------------------------------------------------------------------------------------\nvec3 Blur(vec2 uv, float radius)\n{\n\tradius = radius * .04;\n\n    vec2 circle = vec2(radius) * vec2((iResolution.y / iResolution.x), 1.0);\n\n\t// Remove the time reference to prevent random jittering if you don't like it.\n\tvec2 random = Hash22(uv);\n\n    // Do the blur here...\n\tvec3 acc = vec3(0.0);\n\tfor (int i = 0; i < ITERATIONS; i++)\n    {\n\t\tacc += texture2D(uSampler, uv + circle * Sample(random), radius*10.0).xyz;\n    }\n\treturn acc / float(ITERATIONS);\n}\n\nvoid main(void)\n{\n    vec2 uv = vTextureCoord.xy;\n\n        float radius = 1.0 * (blur);\n//        if (iMouse.w >= 1.0)\n//        {\n//        \tradius = iMouse.x*2.0/iResolution.x;\n//        }\n        radius = pow(radius, 2.0);\n\n//        if (mod(iGlobalTime, 15.0) < 10.0 || iMouse.w >= 1.0)\n//        {\n//    \t\tfragColor = vec4(Blur(uv * vec2(1.0, -1.0), radius), 1.0);\n//        }else\n//        {\n//            fragColor = vec4(Blur(uv * vec2(1.0, -1.0), abs(sin(uv.y*.8+2.85))*4.0), 1.0);\n//        }\n\n            \t\tgl_FragColor = vec4(Blur(uv, radius), 1.0);\n\n}\n\n",
+        {
+            iResolution: { type: 'v2', value: { x: 1920, y: 1080 } },
+            iMouse: { type: 'v2', value: { x: 10, y: 10.8 } },
+            blur: {
+                type: 'f',
+                value: 0.01
+            }
+        }
+    );
+
+    this.iResolution = [1000, 556];
+    this.iMouse = [10, 10];
+    this.blur = 0.01;
+};
+
+HashedblurFilter.prototype = Object.create(PIXI.Filter.prototype);
+HashedblurFilter.prototype.constructor = HashedblurFilter;
+module.exports = HashedblurFilter;
+
+Object.defineProperties(HashedblurFilter.prototype, {
+    iMouse: {
+        get: function () {
+            return this.uniforms.iMouse;
+        },
+        set: function (value) {
+            this.uniforms.iMouse = value;
+        }
+    },
+
+    iResolution: {
+        get: function () {
+            return this.uniforms.iResolution;
+        },
+        set: function(value) {
+            this.uniforms.iResolution = value;
+        }
+    },
+
+    blur: {
+        get: function () {
+            return this.uniforms.blur;
+        },
+        set: function(value) {
+            this.uniforms.blur = value;
+        }
+    }
+});
+
+},{}],5:[function(require,module,exports){
+
+
+/**
+ * OutlineFilter, originally by mishaa
+ * http://www.html5gamedevs.com/topic/10640-outline-a-sprite-change-certain-colors/?p=69966
+ * http://codepen.io/mishaa/pen/emGNRB
+ *
+ * @class
+ * @param viewWidth {number} The width of the view to draw to, usually renderer.width.
+ * @param viewHeight {number} The height of the view to draw to, usually renderer.height.
+ * @param thickness {number} The tickness of the outline.
+ * @param color {number} The color of the glow.
+ *
+ * @example
+ *  someSprite.shader = new OutlineFilter(renderer.width, renderer.height, 9, 0xFF0000);
+ */
 function OutlineFilter(viewWidth, viewHeight, thickness, color) {
     thickness = thickness || 1;
     PIXI.Filter.call(this,
@@ -320,7 +392,7 @@ Object.defineProperties(OutlineFilter.prototype, {
     }
 });
 
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 
 
 /**
@@ -392,7 +464,7 @@ Object.defineProperties(RadialblurFilter.prototype, {
     }
 });
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 
 
 /**
@@ -464,7 +536,7 @@ Object.defineProperties(RadialblurMaskFilter.prototype, {
     }
 });
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 
 
 /**
@@ -531,7 +603,7 @@ Object.defineProperties(SimpleLightmapFilter.prototype, {
 
 module.exports = SimpleLightmapFilter;
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 module.exports = {
     GlowFilter: require('./filters/glow/GlowFilter'),
     OutlineFilter: require('./filters/outline/OutlineFilter'),
@@ -540,14 +612,15 @@ module.exports = {
     SimpleLightmapFilter:
         require('./filters/simplelightmap/SimpleLightmapFilter'),
     RadialBlur: require('./filters/radialblur/RadialblurFilter'),
-    RadialBlurMask: require('./filters/radialblurmask/RadialblurMaskFilter')
+    RadialBlurMask: require('./filters/radialblurmask/RadialblurMaskFilter'),
+    HashedBlur: require('./filters/hashedblur/HashedblurFilter')
 };
 
 for (var filter in module.exports) {
     PIXI.filters[filter] = module.exports[filter];
 }
 
-},{"./filters/bulgepinch/BulgePinchFilter":1,"./filters/colorreplace/ColorReplaceFilter":2,"./filters/glow/GlowFilter":3,"./filters/outline/OutlineFilter":4,"./filters/radialblur/RadialblurFilter":5,"./filters/radialblurmask/RadialblurMaskFilter":6,"./filters/simplelightmap/SimpleLightmapFilter":7}]},{},[8])
+},{"./filters/bulgepinch/BulgePinchFilter":1,"./filters/colorreplace/ColorReplaceFilter":2,"./filters/glow/GlowFilter":3,"./filters/hashedblur/HashedblurFilter":4,"./filters/outline/OutlineFilter":5,"./filters/radialblur/RadialblurFilter":6,"./filters/radialblurmask/RadialblurMaskFilter":7,"./filters/simplelightmap/SimpleLightmapFilter":8}]},{},[9])
 
 
 //# sourceMappingURL=pixi-extra-filters.js.map
