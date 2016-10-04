@@ -340,6 +340,65 @@ Object.defineProperties(HashedblurFilter.prototype, {
  * @example
  *  someSprite.shader = new OutlineFilter(renderer.width, renderer.height, 9, 0xFF0000);
  */
+function LuminanceFilter(iResolution, iMouse) {
+    PIXI.Filter.call(this,
+        // vertex shader
+        // vertex shader
+        "#define GLSLIFY 1\nattribute vec2 aVertexPosition;\nattribute vec2 aTextureCoord;\n\nuniform mat3 projectionMatrix;\nuniform mat3 filterMatrix;\n\nvarying vec2 vTextureCoord;\nvarying vec2 vFilterCoord;\n\nvoid main(void)\n{\n   gl_Position = vec4((projectionMatrix * vec3(aVertexPosition, 1.0)).xy, 0.0, 1.0);\n   vFilterCoord = ( filterMatrix * vec3( aTextureCoord, 1.0)  ).xy;\n   vTextureCoord = aTextureCoord;\n}\n",
+        // fragment shader
+        "precision highp float;\n#define GLSLIFY 1\n\nuniform vec2 iResolution;\nuniform sampler2D uSampler;\nuniform vec2 iMouse;\nuniform float blur;\nvarying vec2 vTextureCoord;\n\nfloat Threshold = 0.0+iMouse.y/iResolution.y*1.0;\nfloat Intensity = 2.0-iMouse.x/iResolution.x*2.0;\nfloat BlurSize = 6.0-iMouse.x/iResolution.x*6.0;\n\nvec4 BlurColor (in vec2 Coord, in sampler2D Tex, in float MipBias)\n{\n\tvec2 TexelSize = MipBias/vec2(1.0, 1.0);;\n\n    vec4  Color = texture2D(Tex, Coord, MipBias);\n    Color += texture2D(Tex, Coord + vec2(TexelSize.x,0.0), MipBias);\n    Color += texture2D(Tex, Coord + vec2(-TexelSize.x,0.0), MipBias);\n    Color += texture2D(Tex, Coord + vec2(0.0,TexelSize.y), MipBias);\n    Color += texture2D(Tex, Coord + vec2(0.0,-TexelSize.y), MipBias);\n    Color += texture2D(Tex, Coord + vec2(TexelSize.x,TexelSize.y), MipBias);\n    Color += texture2D(Tex, Coord + vec2(-TexelSize.x,TexelSize.y), MipBias);\n    Color += texture2D(Tex, Coord + vec2(TexelSize.x,-TexelSize.y), MipBias);\n    Color += texture2D(Tex, Coord + vec2(-TexelSize.x,-TexelSize.y), MipBias);\n\n    return Color/9.0;\n}\n\nvoid main(void)\n{\n\tvec2 uv = vTextureCoord.xy*vec2(1.0,-1.0);\n\n    vec4 Color = texture2D(uSampler, uv);\n\n    vec4 Highlight = clamp(BlurColor(uv, uSampler, BlurSize)-Threshold,0.0,1.0)*1.0/(1.0-Threshold);\n\n    gl_FragColor = 1.0-(1.0-Color)*(1.0-Highlight*Intensity); //Screen Blend Mode\n}\n",
+        {
+            iResolution: { type: 'v2', value: { x: 1920, y: 1080 } },
+            iMouse: { type: 'v2', value: { x: 10, y: 10.8 } }
+        }
+    );
+
+    this.iResolution = [1000, 556];
+    this.iMouse = [10, 10];
+};
+
+LuminanceFilter.prototype = Object.create(PIXI.Filter.prototype);
+LuminanceFilter.prototype.constructor = LuminanceFilter;
+module.exports = LuminanceFilter;
+
+Object.defineProperties(LuminanceFilter.prototype, {
+    iMouse: {
+        get: function () {
+            return this.uniforms.iMouse;
+        },
+        set: function (value) {
+            this.uniforms.iMouse = value;
+        }
+    },
+
+    iResolution: {
+        get: function () {
+            return this.uniforms.iResolution;
+        },
+        set: function(value) {
+            this.uniforms.iResolution = value;
+        }
+    }
+
+});
+
+},{}],6:[function(require,module,exports){
+
+
+/**
+ * OutlineFilter, originally by mishaa
+ * http://www.html5gamedevs.com/topic/10640-outline-a-sprite-change-certain-colors/?p=69966
+ * http://codepen.io/mishaa/pen/emGNRB
+ *
+ * @class
+ * @param viewWidth {number} The width of the view to draw to, usually renderer.width.
+ * @param viewHeight {number} The height of the view to draw to, usually renderer.height.
+ * @param thickness {number} The tickness of the outline.
+ * @param color {number} The color of the glow.
+ *
+ * @example
+ *  someSprite.shader = new OutlineFilter(renderer.width, renderer.height, 9, 0xFF0000);
+ */
 function OutlineFilter(viewWidth, viewHeight, thickness, color) {
     thickness = thickness || 1;
     PIXI.Filter.call(this,
@@ -392,7 +451,7 @@ Object.defineProperties(OutlineFilter.prototype, {
     }
 });
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 
 
 /**
@@ -464,7 +523,7 @@ Object.defineProperties(RadialblurFilter.prototype, {
     }
 });
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 
 
 /**
@@ -536,7 +595,7 @@ Object.defineProperties(RadialblurMaskFilter.prototype, {
     }
 });
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 
 
 /**
@@ -603,7 +662,66 @@ Object.defineProperties(SimpleLightmapFilter.prototype, {
 
 module.exports = SimpleLightmapFilter;
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
+
+
+/**
+ * OutlineFilter, originally by mishaa
+ * http://www.html5gamedevs.com/topic/10640-outline-a-sprite-change-certain-colors/?p=69966
+ * http://codepen.io/mishaa/pen/emGNRB
+ *
+ * @class
+ * @param viewWidth {number} The width of the view to draw to, usually renderer.width.
+ * @param viewHeight {number} The height of the view to draw to, usually renderer.height.
+ * @param thickness {number} The tickness of the outline.
+ * @param color {number} The color of the glow.
+ *
+ * @example
+ *  someSprite.shader = new OutlineFilter(renderer.width, renderer.height, 9, 0xFF0000);
+ */
+function VignetteFilter(iResolution, iMouse) {
+    PIXI.Filter.call(this,
+        // vertex shader
+        // vertex shader
+        "#define GLSLIFY 1\nattribute vec2 aVertexPosition;\nattribute vec2 aTextureCoord;\n\nuniform mat3 projectionMatrix;\nuniform mat3 filterMatrix;\n\nvarying vec2 vTextureCoord;\nvarying vec2 vFilterCoord;\n\nvoid main(void)\n{\n   gl_Position = vec4((projectionMatrix * vec3(aVertexPosition, 1.0)).xy, 0.0, 1.0);\n   vFilterCoord = ( filterMatrix * vec3( aTextureCoord, 1.0)  ).xy;\n   vTextureCoord = aTextureCoord;\n}\n",
+        // fragment shader
+        "precision highp float;\n#define GLSLIFY 1\n\nuniform vec2 iResolution;\nuniform sampler2D uSampler;\nuniform vec2 iMouse;\nuniform float blur;\nvarying vec2 vTextureCoord;\n\nconst float RADIUS = 0.8;\nconst float SOFTNESS = 0.6;\nconst float OPACITY = 0.5;\n\nconst vec4 bgColor = vec4(0.5, 0.15, 0.1, 1.0);\n\nvoid main(void)\n{\n\tvec2 uv = vTextureCoord.xy;\n\n\tvec4 bounds = vec4(0.0, 0.0, iResolution.x, iResolution.y);\n\tvec4 rect = bounds / vec4(iResolution.x, iResolution.y, iResolution.x, iResolution.y);\n\tvec2 pos = (uv - rect.xy) / rect.zw;\n\n    vec2 center = vec2(((cos(iMouse.x * 1.25) + 1.0) / 4.0) + 0.25,\n                       ((sin(iMouse.y * 0.89) + 1.0) / 4.0) + 0.2);\n\tfloat len = length(pos - center);\n\tfloat vignette = smoothstep(RADIUS, RADIUS - SOFTNESS, len);\n                   vec4 color = texture2D(uSampler, uv);\n\n\tgl_FragColor = color;//vec4(mix(color.rgb, vec3(color.rgb * vignette), OPACITY), 1.0);\n}\n",
+        {
+            iResolution: { type: 'v2', value: { x: 1920, y: 1080 } },
+            iMouse: { type: 'v2', value: { x: 10, y: 10.8 } }
+        }
+    );
+
+    this.iResolution = [1000, 556];
+    this.iMouse = [10, 10];
+};
+
+VignetteFilter.prototype = Object.create(PIXI.Filter.prototype);
+VignetteFilter.prototype.constructor = VignetteFilter;
+module.exports = VignetteFilter;
+
+Object.defineProperties(VignetteFilter.prototype, {
+    iMouse: {
+        get: function () {
+            return this.uniforms.iMouse;
+        },
+        set: function (value) {
+            this.uniforms.iMouse = value;
+        }
+    },
+
+    iResolution: {
+        get: function () {
+            return this.uniforms.iResolution;
+        },
+        set: function(value) {
+            this.uniforms.iResolution = value;
+        }
+    }
+
+});
+
+},{}],11:[function(require,module,exports){
 module.exports = {
     GlowFilter: require('./filters/glow/GlowFilter'),
     OutlineFilter: require('./filters/outline/OutlineFilter'),
@@ -613,14 +731,16 @@ module.exports = {
         require('./filters/simplelightmap/SimpleLightmapFilter'),
     RadialBlur: require('./filters/radialblur/RadialblurFilter'),
     RadialBlurMask: require('./filters/radialblurmask/RadialblurMaskFilter'),
-    HashedBlur: require('./filters/hashedblur/HashedblurFilter')
+    HashedBlur: require('./filters/hashedblur/HashedblurFilter'),
+    LuminanceFilter: require('./filters/luminance/LuminanceFilter'),
+    VignetteFilter: require('./filters/vignette/VignetteFilter')
 };
 
 for (var filter in module.exports) {
     PIXI.filters[filter] = module.exports[filter];
 }
 
-},{"./filters/bulgepinch/BulgePinchFilter":1,"./filters/colorreplace/ColorReplaceFilter":2,"./filters/glow/GlowFilter":3,"./filters/hashedblur/HashedblurFilter":4,"./filters/outline/OutlineFilter":5,"./filters/radialblur/RadialblurFilter":6,"./filters/radialblurmask/RadialblurMaskFilter":7,"./filters/simplelightmap/SimpleLightmapFilter":8}]},{},[9])
+},{"./filters/bulgepinch/BulgePinchFilter":1,"./filters/colorreplace/ColorReplaceFilter":2,"./filters/glow/GlowFilter":3,"./filters/hashedblur/HashedblurFilter":4,"./filters/luminance/LuminanceFilter":5,"./filters/outline/OutlineFilter":6,"./filters/radialblur/RadialblurFilter":7,"./filters/radialblurmask/RadialblurMaskFilter":8,"./filters/simplelightmap/SimpleLightmapFilter":9,"./filters/vignette/VignetteFilter":10}]},{},[11])
 
 
 //# sourceMappingURL=pixi-extra-filters.js.map
